@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QToolBar, QActio
     QDockWidget, QGroupBox, QHBoxLayout, QTextEdit, QVBoxLayout, QLineEdit, QLabel, QPushButton, \
     QMessageBox
 
-from topic.number_systems_ import BinToDec, OctToDec
+from topic.number_systems_ import BinToDec, OctToDec, HexToDec, DecToHex
 
 SIZE_WIDTH, SIZE_HEIGHT = 600, 600
 
@@ -14,9 +14,10 @@ SIZE_WIDTH, SIZE_HEIGHT = 600, 600
 class CentralArea(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
-
         self.main_wind = parent
+        self.interface()
 
+    def interface(self):
         self.central_layout = QVBoxLayout(self)
 
         self.label_statement = QLabel(self)
@@ -26,7 +27,7 @@ class CentralArea(QWidget):
         self.task_layout = QHBoxLayout(self)
 
         self.statement = QTextEdit(self)
-        self.resize(SIZE_WIDTH // 2, SIZE_HEIGHT // 2)
+        self.resize(SIZE_WIDTH // 2, SIZE_HEIGHT // 4)
         self.statement.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.task_layout.addWidget(self.statement)
 
@@ -66,6 +67,10 @@ class CentralArea(QWidget):
             return
         self.main_wind.results[self.main_wind.switch_bar.selected_item] = self.student_answer.text()
         self.main_wind.change_task()
+        if all(self.main_wind.results):
+            if QMessageBox().question(self, 'Введены все ответы',
+                                      'Завершить тест?') == QMessageBox.Yes:
+                self.main_wind.switch_bar.finish_test()
 
     def save_answer(self):
         index = self.main_wind.switch_bar.selected_item
@@ -94,11 +99,15 @@ class SwitchMenu(QToolBar):
         self.addWidget(groupbox)
 
         self.addSeparator()
-
         self.finish_button = QPushButton(self)
         self.finish_button.setText('Завершить тест')
         self.finish_button.clicked.connect(self.finish_test)
         self.addWidget(self.finish_button)
+
+        self.addSeparator()
+        self.result_label = QLabel(self)
+        self.result_label.setText('                        ')
+        self.addWidget(self.result_label)
 
     def change_task(self):
         btn = self.sender()
@@ -107,12 +116,21 @@ class SwitchMenu(QToolBar):
         self.main_window.change_task()
 
     def finish_test(self):
+        if not all(self.main_window.results):
+            QMessageBox().information(self, "Обратите внимание",
+                                      'Для завершения теста нужно отправить ВСЕ ответы!')
+            return
         count = 0
         for i in range(len(self.main_window.results)):
-            count += int(self.main_window.results[i]) == self.main_window.tasks[i].good_answer
-        msg_box = QMessageBox()
-        msg_box.about(self, 'Результат',
-                                    f'Ваш результат: {count} из {len(self.main_window.results)}.')
+            user_answer = ''.join(self.main_window.results[i].upper().split())
+            ok_answer = self.main_window.tasks[i].good_answer.upper()
+            count += user_answer == ok_answer
+        self.main_window.test_result = count
+        result_string = f'Ваш результат: {count} из {len(self.main_window.results)}.'
+        QMessageBox().information(self, 'Результат', result_string)
+        self.main_window.test_result = result_string
+        self.finish_button.setEnabled(False)
+        self.result_label.setText(result_string)
 
 
 class MainWindow(QMainWindow):
@@ -121,7 +139,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Challenge')
-        self.resize(600, 600)
+        self.resize(600, 400)
         self.setWindowFlags(QtCore.Qt.MSWindowsFixedSizeDialogHint)
 
         self.setStyleSheet('font-size: 14px')
@@ -133,29 +151,29 @@ class MainWindow(QMainWindow):
         self.switch_bar = SwitchMenu(self, len(self.tasks))
         self.addToolBar(self.switch_bar)
 
-        self.centralWidget = CentralArea(self)
-        self.setCentralWidget(self.centralWidget)
+        self.central_widget = CentralArea(self)
+        self.setCentralWidget(self.central_widget)
 
         self.change_task()
 
     def change_task(self):
         index = self.switch_bar.selected_item
         current_task = self.tasks[index]
-        self.centralWidget.statement.setHtml(current_task.generated_text)
+        self.central_widget.statement.setHtml(current_task.generated_text)
         if self.results[self.switch_bar.selected_item] is not None:
-            self.centralWidget.student_answer.setEnabled(False)
-            self.centralWidget.save_button.setEnabled(False)
+            self.central_widget.student_answer.setEnabled(False)
+            self.central_widget.save_button.setEnabled(False)
             answer = self.results[self.switch_bar.selected_item]
-            self.centralWidget.save_button.setText(f'Ответ принят')
-            self.centralWidget.student_answer.setText(answer)
+            self.central_widget.save_button.setText(f'Ответ принят')
+            self.central_widget.student_answer.setText(answer)
         else:
-            self.centralWidget.student_answer.setEnabled(True)
-            self.centralWidget.save_button.setText('Отправить ответ')
+            self.central_widget.student_answer.setEnabled(True)
+            self.central_widget.save_button.setText('Отправить ответ')
             if self.answers[index] is not None:
-                self.centralWidget.student_answer.setText(self.answers[index])
+                self.central_widget.student_answer.setText(self.answers[index])
             else:
-                self.centralWidget.student_answer.setText("")
-            self.centralWidget.save_button.setEnabled(True)
+                self.central_widget.student_answer.setText("")
+            self.central_widget.save_button.setEnabled(True)
 
 
 def except_hook(cls, exception, traceback):
@@ -164,7 +182,7 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    wnd = MainWindow([BinToDec(), BinToDec(), OctToDec(), OctToDec()])
+    wnd = MainWindow([BinToDec(), BinToDec(), OctToDec(), OctToDec(), HexToDec(), DecToHex()])
     wnd.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

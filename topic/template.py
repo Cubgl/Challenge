@@ -67,6 +67,22 @@ class SegmentSymbolsConstraint(SymbolsConstraint, SegmentConstraint):
         return value
 
 
+class LengthConstraint(Constraint):
+    def __init__(self, length, alphabet, for_first_alphabet):
+        self.name = 'Ограничение на длину параметра'
+        self.type = type(str)
+        self.length = length
+        self.symbols = list(alphabet)
+        self.symbols_for_first = list(for_first_alphabet)
+
+    def validate(self, value):
+        return len(value) <= self.length
+
+    def generate(self):
+        return ''.join([random.choice(self.symbols_for_first)] +
+                       random.choices(self.symbols, k=self.length - 1))
+
+
 class Task:
     def __init__(self):
         self.task_image = None
