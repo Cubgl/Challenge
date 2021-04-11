@@ -1,24 +1,36 @@
 import sys
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QToolBar, QAction, QRadioButton, \
-    QDockWidget, QGroupBox, QHBoxLayout, QTextEdit, QVBoxLayout, QLineEdit, QLabel, QPushButton, \
-    QMessageBox
+from PyQt5.QtWidgets import QApplication, QRadioButton, QGroupBox, QHBoxLayout, QTextEdit, \
+    QVBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDialog
 
-from topic.number_systems_ import BinToDec, OctToDec, HexToDec, DecToHex
+from topic.number_systems_ import *
 
 SIZE_WIDTH, SIZE_HEIGHT = 600, 600
 
 
-class CentralArea(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.main_wind = parent
+class CentralArea(QDialog):
+    def __init__(self, list_tasks):
+        super().__init__()
+        self.setWindowTitle('Challenge')
+        self.setStyleSheet('font-size: 14px')
+
+        self.selected_item = 0
+        self.tasks = list_tasks
+        self.answers = [None] * len(self.tasks)
+        self.results = [None] * len(self.tasks)
+
         self.interface()
+        self.change_text_task()
+        self.student_answer.setFocus()
 
     def interface(self):
         self.central_layout = QVBoxLayout(self)
+
+        switch_panel = QHBoxLayout(self)
+        self.interface_switch_bar(len(self.tasks), switch_panel)
+        self.central_layout.addLayout(switch_panel)
 
         self.label_statement = QLabel(self)
         self.label_statement.setText('Условие задачи:')
@@ -53,6 +65,7 @@ class CentralArea(QWidget):
         self.save_button = QPushButton(self)
         self.save_button.setText('Отправить ответ')
         self.save_button.clicked.connect(self.send_answer)
+        self.save_button.setDefault(True)
 
         self.last_line_layout.addWidget(self.save_button)
         self.last_line_layout.addSpacing(SIZE_WIDTH // 2)
@@ -61,29 +74,7 @@ class CentralArea(QWidget):
 
         self.setLayout(self.central_layout)
 
-    def send_answer(self):
-        answer = self.student_answer.text()
-        if len(answer) == 0 or answer.isspace():
-            return
-        self.main_wind.results[self.main_wind.switch_bar.selected_item] = self.student_answer.text()
-        self.main_wind.change_task()
-        if all(self.main_wind.results):
-            if QMessageBox().question(self, 'Введены все ответы',
-                                      'Завершить тест?') == QMessageBox.Yes:
-                self.main_wind.switch_bar.finish_test()
-
-    def save_answer(self):
-        index = self.main_wind.switch_bar.selected_item
-        self.main_wind.answers[index] = self.student_answer.text()
-
-
-class SwitchMenu(QToolBar):
-    def __init__(self, parent, count_tasks):
-        super().__init__(parent)
-
-        self.selected_item = 0
-        self.main_window = parent
-
+    def interface_switch_bar(self, count_tasks, layout):
         groupbox = QGroupBox(self)
         radiogroup_layout = QHBoxLayout(self)
         for i in range(count_tasks):
@@ -96,84 +87,88 @@ class SwitchMenu(QToolBar):
             button.setToolTipDuration(3000)
             radiogroup_layout.addWidget(button)
         groupbox.setLayout(radiogroup_layout)
-        self.addWidget(groupbox)
+        layout.addWidget(groupbox)
 
-        self.addSeparator()
         self.finish_button = QPushButton(self)
         self.finish_button.setText('Завершить тест')
         self.finish_button.clicked.connect(self.finish_test)
-        self.addWidget(self.finish_button)
+        layout.addWidget(self.finish_button)
 
-        self.addSeparator()
         self.result_label = QLabel(self)
         self.result_label.setText('                        ')
-        self.addWidget(self.result_label)
+        layout.addWidget(self.result_label)
+
+    def send_answer(self):
+        answer = self.student_answer.text()
+        if len(answer) == 0 or answer.isspace():
+            return
+        self.results[self.selected_item] = self.student_answer.text()
+        self.change_text_task()
+        if all(self.results):
+            if QMessageBox().question(self, 'Введены все ответы',
+                                      'Завершить тест?') == QMessageBox.Yes:
+                self.finish_test()
+
+    def save_answer(self):
+        index = self.selected_item
+        self.answers[index] = self.student_answer.text()
 
     def change_task(self):
         btn = self.sender()
         self.selected_item = int(btn.text()) - 1
-        current_task = self.main_window.tasks[self.selected_item]
-        self.main_window.change_task()
+        current_task = self.tasks[self.selected_item]
+        self.change_text_task()
 
     def finish_test(self):
-        if not all(self.main_window.results):
+        if not all(self.results):
             QMessageBox().information(self, "Обратите внимание",
                                       'Для завершения теста нужно отправить ВСЕ ответы!')
             return
-        count = 0
-        for i in range(len(self.main_window.results)):
-            user_answer = ''.join(self.main_window.results[i].upper().split())
-            ok_answer = self.main_window.tasks[i].good_answer.upper()
-            count += user_answer == ok_answer
-        self.main_window.test_result = count
-        result_string = f'Ваш результат: {count} из {len(self.main_window.results)}.'
+
+        count_good_answers = 0
+        for i in range(len(self.results)):
+            user_answer = ''
+            if self.results[i] is not None:
+                user_answer = ''.join(self.results[i].upper().split())
+            ok_answer = self.tasks[i].good_answer.upper()
+            count_good_answers += user_answer == ok_answer
+        self.test_result = count_good_answers
+        result_string = f'Ваш результат: {count_good_answers} из {len(self.results)}.'
         QMessageBox().information(self, 'Результат', result_string)
-        self.main_window.test_result = result_string
+        self.test_result = result_string
         self.finish_button.setEnabled(False)
         self.result_label.setText(result_string)
 
-
-class MainWindow(QMainWindow):
-
-    def __init__(self, list_tasks):
-        super().__init__()
-
-        self.setWindowTitle('Challenge')
-        self.resize(600, 400)
-        self.setWindowFlags(QtCore.Qt.MSWindowsFixedSizeDialogHint)
-
-        self.setStyleSheet('font-size: 14px')
-
-        self.tasks = list_tasks
-        self.answers = [None] * len(self.tasks)
-        self.results = [None] * len(self.tasks)
-
-        self.switch_bar = SwitchMenu(self, len(self.tasks))
-        self.addToolBar(self.switch_bar)
-
-        self.central_widget = CentralArea(self)
-        self.setCentralWidget(self.central_widget)
-
-        self.change_task()
-
-    def change_task(self):
-        index = self.switch_bar.selected_item
+    def change_text_task(self):
+        index = self.selected_item
         current_task = self.tasks[index]
-        self.central_widget.statement.setHtml(current_task.generated_text)
-        if self.results[self.switch_bar.selected_item] is not None:
-            self.central_widget.student_answer.setEnabled(False)
-            self.central_widget.save_button.setEnabled(False)
-            answer = self.results[self.switch_bar.selected_item]
-            self.central_widget.save_button.setText(f'Ответ принят')
-            self.central_widget.student_answer.setText(answer)
+        self.statement.setHtml(current_task.generated_text)
+        if self.results[self.selected_item] is not None:
+            self.student_answer.setEnabled(False)
+            self.save_button.setEnabled(False)
+            answer = self.results[self.selected_item]
+            self.save_button.setText(f'Ответ принят')
+            self.student_answer.setText(answer)
         else:
-            self.central_widget.student_answer.setEnabled(True)
-            self.central_widget.save_button.setText('Отправить ответ')
+            self.student_answer.setEnabled(True)
+            self.save_button.setText('Отправить ответ')
             if self.answers[index] is not None:
-                self.central_widget.student_answer.setText(self.answers[index])
+                self.student_answer.setText(self.answers[index])
             else:
-                self.central_widget.student_answer.setText("")
-            self.central_widget.save_button.setEnabled(True)
+                self.student_answer.setText("")
+            self.save_button.setEnabled(True)
+        self.student_answer.setFocus()
+
+    def closeEvent(self, e):
+        result = QMessageBox.question(self, 'Подтверждение закрытия окна',
+                                      'Вы действительно хотите закрыть окно?',
+                                      QMessageBox.Yes | QMessageBox.No,
+                                      QMessageBox.No)
+        if result == QMessageBox.Yes:
+            e.accept()
+            QDialog.closeEvent(self, e)
+        else:
+            e.ignore()
 
 
 def except_hook(cls, exception, traceback):
@@ -182,7 +177,8 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    wnd = MainWindow([BinToDec(), BinToDec(), OctToDec(), OctToDec(), HexToDec(), DecToHex()])
+    wnd = CentralArea([DecToOtherNumberSystemWithLetters(), DecToOtherNumberSystemWithLetters(),
+                       DecToOtherNumberSystemWithLetters(), DecToOtherNumberSystemWithLetters()])
     wnd.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

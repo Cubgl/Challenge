@@ -13,6 +13,18 @@ class Constraint():
         return None
 
 
+class ListValuesConstraint(Constraint):
+    def __init__(self, *possible_values):
+        self.name = 'Ограничение в виде списка допустимых значений'
+        self.list_values = possible_values
+
+    def validate(self, value):
+        return value in self.list_values
+
+    def generate(self):
+        return random.choice(self.list_values)
+
+
 class SegmentConstraint(Constraint):
     def __init__(self, a, b):
         self.name = 'Ограничение на принадлежность промежутку в целом числе'
