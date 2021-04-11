@@ -105,4 +105,4 @@ class DecToOtherNumberSystemWithLetters(Task):
 
     def set_constraint_params(self):
         self.params['a'] = SegmentConstraint(102, 314)
-        self.params['p'] = ListValuesConstraint(11, 12, 13, 14, 15, 17)
+        self.params['p'] = ListConstraint(11, 12, 13, 14, 15, 17)

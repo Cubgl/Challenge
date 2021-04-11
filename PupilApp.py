@@ -5,19 +5,23 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QRadioButton, QGroupBox, QHBoxLayout, QTextEdit, \
     QVBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDialog
 
-from topic.number_systems_ import *
+from topic.excel_table_ import *
 
-SIZE_WIDTH, SIZE_HEIGHT = 600, 600
+SIZE_WIDTH, SIZE_HEIGHT = 800, 600
 
 
 class CentralArea(QDialog):
     def __init__(self, list_tasks):
         super().__init__()
         self.setWindowTitle('Challenge')
-        self.setStyleSheet('font-size: 14px')
+        self.resize(SIZE_WIDTH, SIZE_HEIGHT)
+        self.setStyleSheet('font-size: 18px')
 
         self.selected_item = 0
         self.tasks = list_tasks
+        self.tasks[0].statement()
+        print('Изображение:', self.tasks[0].task_image)
+
         self.answers = [None] * len(self.tasks)
         self.results = [None] * len(self.tasks)
 
@@ -143,6 +147,11 @@ class CentralArea(QDialog):
         index = self.selected_item
         current_task = self.tasks[index]
         self.statement.setHtml(current_task.generated_text)
+        print(current_task.task_image)
+        if current_task.task_image is not None:
+            self.picture.setPixmap(QPixmap(self.tasks[index].task_image))
+        else:
+            self.picture.setPixmap(QPixmap())
         if self.results[self.selected_item] is not None:
             self.student_answer.setEnabled(False)
             self.save_button.setEnabled(False)
@@ -177,8 +186,8 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    wnd = CentralArea([DecToOtherNumberSystemWithLetters(), DecToOtherNumberSystemWithLetters(),
-                       DecToOtherNumberSystemWithLetters(), DecToOtherNumberSystemWithLetters()])
+    wnd = CentralArea([CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
+                       CalcFromIndirectInformation()])
     wnd.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

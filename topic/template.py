@@ -1,5 +1,6 @@
 import random
 
+PREFIX_FOR_PATH_TO_IMAGE = './image/'
 
 class Constraint():
     def __init__(self, str_name=""):
@@ -13,7 +14,7 @@ class Constraint():
         return None
 
 
-class ListValuesConstraint(Constraint):
+class ListConstraint(Constraint):
     def __init__(self, *possible_values):
         self.name = 'Ограничение в виде списка допустимых значений'
         self.list_values = possible_values
@@ -107,7 +108,7 @@ class Task:
         self.render_text()
 
     def set_image(self, filename):
-        self.task_image = filename
+        self.task_image = PREFIX_FOR_PATH_TO_IMAGE + filename
 
     def statement(self):
         return ""
@@ -119,8 +120,12 @@ class Task:
         words = text.split()
         dict_params = {}
         for elem in words:
-            if len(elem) > 4 and elem[:2] == '{{' and elem[-2:] == '}}':
-                dict_params[elem[2:-2]] = Constraint()
+            if len(elem) > 4:
+                pos_begin = elem.find('{{')
+                if pos_begin != -1:
+                    pos_end = elem.find('}}')
+                    if pos_end != -1:
+                        dict_params[elem[pos_begin + 2:pos_end]] = Constraint()
         return dict_params
 
     def calculate_answer(self, **values):
@@ -143,6 +148,13 @@ class Task:
     def render_text(self):
         words = self.task_text.split()
         for i in range(len(words)):
-            if len(words[i]) > 4 and words[i][:2] == '{{' and words[i][-2:] == '}}':
-                words[i] = str(self.values_params[words[i][2:-2]])
+            if len(words[i]) > 4:
+                pos_begin = words[i].find('{{')
+                if pos_begin != -1:
+                    pos_end = words[i].find('}}')
+                    if pos_end != -1:
+                        words[i] = words[i][:pos_begin] + \
+                                   str(self.values_params[words[i][pos_begin + 2:pos_end]]) + \
+                                   words[i][pos_end + 2:]
+
         self.generated_text = ' '.join(words)
