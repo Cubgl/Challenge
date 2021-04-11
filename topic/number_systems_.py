@@ -1,6 +1,3 @@
-'''
-Системы счисления
-'''
 from .template import *
 
 
