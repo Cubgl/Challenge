@@ -7,7 +7,7 @@ def pr(**p):
 
 if __name__ == '__main__':
     test_task1 = CalcFromWithPicture()
-    test_task1.render_text()
+    test_task1.make_task()
     print(test_task1.generated_text)
     print(test_task1.values_params)
     print(test_task1.calculate_answer(**test_task1.values_params))

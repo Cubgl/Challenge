@@ -103,8 +103,10 @@ class Task:
         self.params = self.get_params(self.task_text)
         self.values_params = {}
         self.good_answer = ''
-        self.generate()
         self.generated_text = ""
+
+    def make_task(self):
+        self.generate()
         self.render_text()
 
     def set_image(self, filename):

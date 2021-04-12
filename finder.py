@@ -5,6 +5,7 @@ class Finder:
     def __init__(self):
         self.list_topics_data = []
         self.list_topics_names = []
+        self.list_modules = []
         self.get_list_topics()
 
     def get_list_topics(self):
@@ -15,6 +16,7 @@ class Finder:
                 exec(f'import {module_name} as module')
                 doc_str = eval('module.__doc__')
                 if doc_str is not None:
+                    self.list_modules.append(module_name)
                     self.list_topics_names.append(doc_str.strip())
                     self.list_topics_data.append(self.get_names_class(filename))
 

@@ -19,6 +19,8 @@ class CentralArea(QDialog):
 
         self.selected_item = 0
         self.tasks = list_tasks
+        for i in range(len(self.tasks)):
+            self.tasks[i].make_task()
         self.tasks[0].statement()
         print('Изображение:', self.tasks[0].task_image)
 
