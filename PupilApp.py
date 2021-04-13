@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QApplication, QRadioButton, QGroupBox, QHBoxLayout, 
     QVBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDialog
 
 from topic.excel_table_ import *
+from topic.number_systems_ import DecToOtherNumberSystemWithoutLetters, \
+    DecToOtherNumberSystemWithLetters
 
 SIZE_WIDTH, SIZE_HEIGHT = 800, 600
 
@@ -189,7 +191,7 @@ def except_hook(cls, exception, traceback):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     wnd = CentralArea([CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
-                       CalcFromIndirectInformation()])
+                       DecToOtherNumberSystemWithoutLetters(), DecToOtherNumberSystemWithLetters()])
     wnd.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())
