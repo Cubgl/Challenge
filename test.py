@@ -6,7 +6,7 @@ def pr(**p):
     print(**p)
 
 if __name__ == '__main__':
-    test_task1 = CalcFromWithPicture()
+    test_task1 = CalcFromIndirectInformation()
     test_task1.make_task()
     print(test_task1.generated_text)
     print(test_task1.values_params)

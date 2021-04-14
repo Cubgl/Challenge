@@ -1,13 +1,13 @@
 import sys
 
 from PyQt5 import QtCore
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel, QMenu, QAction, \
-    QTableView, QCheckBox
+    QTableView, QCheckBox, QLineEdit, QHBoxLayout, QScrollArea
 
 from finder import Finder
 
-SIZE_WIDTH, SIZE_HEIGHT = 800, 600
+SIZE_WIDTH, SIZE_HEIGHT = 1200, 800
 
 
 class MainWind(QDialog):
@@ -21,14 +21,31 @@ class MainWind(QDialog):
         self.setStyleSheet('font-size: 16px')
         self.list_models = [None] * len(finder.list_topics_names)
 
+        label_name = QLabel()
+        label_name.setText('Название теста:')
+        linedit_name = QLineEdit()
+        layout_name = QHBoxLayout()
+        layout_name.addWidget(label_name)
+        layout_name.addWidget(linedit_name)
+
+        check_random = QCheckBox()
+        check_random.setText('Случайное перемешивание вопросов')
+        check_study = QCheckBox()
+        check_study.setText('Обучающий режим теста')
+        layout_check = QHBoxLayout()
+        layout_check.addWidget(check_random)
+        layout_check.addWidget(check_study)
+
         tool_box = QToolBox()
         for i in range(len(self.list_topics)):
             self.create_table(i)
             table = QTableView(self)
             table.setModel(self.list_models[i])
             table.resizeColumnToContents(0)
-            table.setColumnWidth(1, 300)
-            table.setColumnWidth(2, 120)
+            table.setColumnWidth(1, 100)
+            table.setColumnWidth(2, 320)
+            table.setColumnWidth(3, 120)
+            table.setColumnWidth(4, 180)
             table.setGridStyle(QtCore.Qt.SolidLine)
             table.resizeRowsToContents()
             table.setWordWrap(True)
@@ -36,35 +53,44 @@ class MainWind(QDialog):
         tool_box.setCurrentIndex(0)
 
         self.layout = QVBoxLayout()
+        self.layout.addLayout(layout_name)
+        self.layout.addLayout(layout_check)
         self.layout.addWidget(tool_box)
         self.setLayout(self.layout)
 
     def create_table(self, index):
         count_rows = len(self.list_content[index])
-        self.list_models[index] = QStandardItemModel(0, 3)
+        self.list_models[index] = QStandardItemModel(0, 5)
         for row in range(count_rows):
             item_name = QStandardItem(self.list_content[index][row])
             item_name.setCheckable(True)
+            item_count = QStandardItem('1')
+            item_count.setEnabled(True)
             try:
                 exec(f'import {self.list_modules[index]} as module')
                 test_task = eval(f'module.{self.list_content[index][row]}()')
                 test_task.make_task()
                 example_text = test_task.generated_text
+                answer_text = test_task.calculate_answer(**test_task.values_params)
+                image_text = test_task.task_image
             except Exception as e:
                 example_text = 'ОШИБКА при генерации задания'
             item_text = QStandardItem(example_text)
-            item_answer = QStandardItem('Ответ')
-            self.list_models[index].appendRow([item_name, item_text, item_answer])
+            item_answer = QStandardItem(answer_text)
+            item_image = QStandardItem(image_text)
+            self.list_models[index].appendRow(
+                [item_name, item_count, item_text, item_answer, item_image])
 
-        self.list_models[index].setHorizontalHeaderLabels(['Название', 'Пример задания',
-                                                           'Пример ответа'])
+            self.list_models[index].setHorizontalHeaderLabels(['Название', 'Количество',
+                                                               'Пример задания', 'Пример ответа',
+                                                               'Изображение'])
 
 
 if __name__ == '__main__':
     finder = Finder()
-    print(finder.list_topics_names)
-    print(finder.list_topics_data)
-    app = QApplication(sys.argv)
-    wnd = MainWind(finder)
-    wnd.show()
-    sys.exit(app.exec())
+print(finder.list_topics_names)
+print(finder.list_topics_data)
+app = QApplication(sys.argv)
+wnd = MainWind(finder)
+wnd.show()
+sys.exit(app.exec())

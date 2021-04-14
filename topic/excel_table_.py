@@ -11,11 +11,11 @@ class CalcFromIndirectInformation(Task):
                Чему равно значение ячейки D1, если значение формулы =СУММ(A1:D1) равно {{b}}?"""
 
     def calculate(self, **values_params):
-        return str(self.values_params['b'] - self.values_params['a'])
+        return str(self.values_params['b'] - self.values_params['a'] * 3)
 
     def set_constraint_params(self):
-        self.params['a'] = SegmentConstraint(5, 20)
-        self.params['b'] = SegmentConstraint(21, 40)
+        self.params['a'] = SegmentConstraint(3, 20)
+        self.params['b'] = SegmentConstraint(61, 80)
 
 
 class CalcFromWithPicture(Task):
