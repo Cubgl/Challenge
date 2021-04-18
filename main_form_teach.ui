@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>555</width>
+    <height>522</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTableView" name="tableView_test"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>555</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_test">
+    <property name="title">
+     <string>Тест</string>
+    </property>
+    <addaction name="add_test"/>
+    <addaction name="edit_test"/>
+    <addaction name="delete_test"/>
+    <addaction name="separator"/>
+    <addaction name="quit"/>
+   </widget>
+   <widget class="QMenu" name="menu_results">
+    <property name="title">
+     <string>Результаты</string>
+    </property>
+    <addaction name="pupil_res"/>
+    <addaction name="test_stats"/>
+    <addaction name="task_stats"/>
+   </widget>
+   <widget class="QMenu" name="menu_about">
+    <property name="title">
+     <string>О прогремме...</string>
+    </property>
+   </widget>
+   <addaction name="menu_test"/>
+   <addaction name="menu_results"/>
+   <addaction name="menu_about"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="add_test">
+   <property name="text">
+    <string>Создать</string>
+   </property>
+  </action>
+  <action name="edit_test">
+   <property name="text">
+    <string>Изменить</string>
+   </property>
+  </action>
+  <action name="delete_test">
+   <property name="text">
+    <string>Удалить</string>
+   </property>
+  </action>
+  <action name="quit">
+   <property name="text">
+    <string>Выход</string>
+   </property>
+  </action>
+  <action name="pupil_res">
+   <property name="text">
+    <string>По тесту...</string>
+   </property>
+  </action>
+  <action name="test_stats">
+   <property name="text">
+    <string>Статистика теста</string>
+   </property>
+  </action>
+  <action name="task_stats">
+   <property name="text">
+    <string>Статистика задания</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
