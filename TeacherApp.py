@@ -3,11 +3,11 @@ import sys
 from PyQt5 import QtCore
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel, QMenu, QAction, \
-    QTableView, QCheckBox, QLineEdit, QHBoxLayout, QScrollArea
+    QTableView, QCheckBox, QLineEdit, QHBoxLayout, QScrollArea, QPushButton
 
 from finder import Finder
 
-SIZE_WIDTH, SIZE_HEIGHT = 1200, 800
+SIZE_WIDTH, SIZE_HEIGHT = 1200, 600
 
 
 class MainWind(QDialog):
@@ -52,10 +52,19 @@ class MainWind(QDialog):
             tool_box.addItem(table, self.list_topics[i])
         tool_box.setCurrentIndex(0)
 
+        button_save = QPushButton()
+        button_save.setText("Сохранить")
+        button_cancel = QPushButton()
+        button_cancel.setText('Забыть')
+        layout_button = QHBoxLayout()
+        layout_button.addWidget(button_save)
+        layout_button.addWidget(button_cancel)
+
         self.layout = QVBoxLayout()
         self.layout.addLayout(layout_name)
         self.layout.addLayout(layout_check)
         self.layout.addWidget(tool_box)
+        self.layout.addLayout(layout_button)
         self.setLayout(self.layout)
 
     def create_table(self, index):
@@ -88,9 +97,7 @@ class MainWind(QDialog):
 
 if __name__ == '__main__':
     finder = Finder()
-print(finder.list_topics_names)
-print(finder.list_topics_data)
-app = QApplication(sys.argv)
-wnd = MainWind(finder)
-wnd.show()
-sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    wnd = MainWind(finder)
+    wnd.show()
+    sys.exit(app.exec())

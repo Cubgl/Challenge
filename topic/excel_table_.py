@@ -1,7 +1,4 @@
-'''
-Электронные таблицы
-'''
-
+"""Электронные таблицы"""
 from .template import *
 
 
@@ -37,3 +34,4 @@ class CalcFromWithPicture(Task):
 
     def set_constraint_params(self):
         self.params['a'] = ListConstraint('A1:C3', 'A1:C1', 'B1:C4', 'A1:B3', 'B1:D2', 'A2:C3')
+
