@@ -9,9 +9,10 @@ class Finder:
         self.get_list_topics()
 
     def get_list_topics(self):
-        for elem in os.listdir('./topic'):
-            if os.path.isfile('./topic/' + elem) and elem.endswith('.py'):
-                filename = './topic/' + elem
+        # print(os.getcwd())
+        for elem in os.listdir('../topic'):
+            if os.path.isfile('../topic/' + elem) and elem.endswith('.py'):
+                filename = '../topic/' + elem
                 module_name = f'topic.{elem[:-3]}'
                 exec(f'import {module_name} as module')
                 doc_str = eval('module.__doc__')

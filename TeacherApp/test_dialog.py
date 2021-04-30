@@ -1,17 +1,18 @@
 import sys
+import sqlite3
+from PyQt5 import QtCore
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel, QTableView, \
+    QCheckBox, QLineEdit, QHBoxLayout, \
+    QPushButton, QMessageBox
 
-from PyQt5 import QtCore, Qt
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon
-from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel, QMenu, QAction, \
-    QTableView, QCheckBox, QLineEdit, QHBoxLayout, QScrollArea, QPushButton, QMessageBox
-
-from finder import Finder
+from TeacherApp.finder import Finder
 
 SIZE_WIDTH, SIZE_HEIGHT = 1200, 600
 
 
 class TestDialogWind(QDialog):
-    def __init__(self, finder):
+    def __init__(self, finder, con):
         super().__init__()
         self.setWindowTitle('Формирование теста')
         self.resize(SIZE_WIDTH, SIZE_HEIGHT)
@@ -74,6 +75,8 @@ class TestDialogWind(QDialog):
         self.setLayout(self.layout)
 
         self.selected_items = {}
+        self.insert_mode = True
+        self.db_con = con
 
     def create_table(self, index):
         count_rows = len(self.list_content[index])
@@ -81,7 +84,8 @@ class TestDialogWind(QDialog):
         for row in range(count_rows):
             item_name = QStandardItem(self.list_content[index][row])
             item_name.setCheckable(True)
-            item_count = QStandardItem('1')
+            item_name.setEditable(False)
+            item_count = QStandardItem('0')
             item_count.setEnabled(True)
             try:
                 exec(f'import {self.list_modules[index]} as module')
@@ -93,47 +97,97 @@ class TestDialogWind(QDialog):
             except Exception as e:
                 example_text = 'ОШИБКА при генерации задания'
             item_text = QStandardItem(example_text)
+            item_text.setEditable(False)
             item_answer = QStandardItem(answer_text)
+            item_answer.setEditable(False)
             item_image = QStandardItem(image_text)
+            item_image.setEditable(False)
             self.list_models[index].appendRow(
                 [item_name, item_count, item_text, item_answer, item_image])
 
             self.list_models[index].setHorizontalHeaderLabels(['Название', 'Количество',
                                                                'Пример задания', 'Пример ответа',
                                                                'Изображение'])
+        self.list_models[index].itemChanged.connect(self.change_count)
+
+    def change_count(self, item):
+        number_row = item.row()
+        new_data = item.data(QtCore.Qt.EditRole)
+        parent_model = item.model()
+        check_field = parent_model.item(number_row, 0)
+        count_field = parent_model.item(number_row, 1)
+        if item is check_field:
+            if check_field.checkState() == QtCore.Qt.Checked and count_field.data(
+                    QtCore.Qt.EditRole) != '0':
+                return
+            if check_field.checkState() == QtCore.Qt.Checked and count_field.data(
+                    QtCore.Qt.EditRole) == '0':
+                count_field.setData('1', QtCore.Qt.EditRole)
+                return
+            if check_field.checkState() != QtCore.Qt.Checked and count_field.data(
+                    QtCore.Qt.EditRole) != '0':
+                count_field.setData('0', QtCore.Qt.EditRole)
+                return
+        else:
+            if check_field.checkState() != QtCore.Qt.Checked and count_field.data(
+                    QtCore.Qt.EditRole) != '0':
+                check_field.setCheckState(QtCore.Qt.Checked)
+                return
+            if check_field.checkState() == QtCore.Qt.Checked and count_field.data(
+                    QtCore.Qt.EditRole) == '0':
+                check_field.setCheckState(QtCore.Qt.Unchecked)
+                return
 
     def get_selected_items(self):
         for i in range(len(self.list_models)):
+            name_topic = self.list_topics[i]
             for j in range(self.list_models[i].rowCount()):
                 name_class = self.list_models[i].item(j, 0)
-                count_items_this_class = self.list_models[i].item(j, 1)
-                if name_class.checkState():
-                    if self.list_topics[i] not in self.selected_items:
-                        self.selected_items[self.list_modules[i]] =[(name_class.text(), 
-                                                                    int(count_items_this_class.text()))]
+                count_items = self.list_models[i].item(j, 1)
+                if name_class.checkState() == QtCore.Qt.Checked:
+                    if name_topic not in self.selected_items:
+                        self.selected_items[name_topic] = [(name_class.text(),
+                                                            int(count_items.text()))]
                     else:
-                        self.selected_items[self.list_modules[i]].append((name_class.text(), 
-                                                                        int(count_items_this_class.text())))
-                
+                        self.selected_items[name_topic].append((name_class.text(),
+                                                                int(count_items.text())))
+
     def validate(self):
         if len(self.linedit_name.text()) == 0 or self.linedit_name.text().isspace():
-            QMessageBox.warning(self, 'Предупреждение', 'Введите название теста. Это поле не должно быть пустым.')
+            QMessageBox.warning(self, 'Предупреждение',
+                                'Введите название теста. Это поле не должно быть пустым.')
             return False
         self.get_selected_items()
         if not self.selected_items:
-            QMessageBox.warning(self, 'Предупреждение', 'Не выбраны задания теста. Должно быть выбрано хотя бы одно задание.')
+            QMessageBox.warning(self, 'Предупреждение',
+                                'Не выбраны задания теста. Должно быть выбрано хотя бы одно задание.')
             return False
         return True
 
     def save_test(self):
         if self.validate():
+            if self.insert_mode:
+                cur = self.db_con.cursor()
+                insert_query = "INSERT INTO challenges(title, mixing, training) VALUES "
+                insert_query += f"('{self.linedit_name.text()}', "
+                insert_query += f"{self.check_random.checkState() == QtCore.Qt.Checked}, "
+                insert_query += f"{self.check_study.checkState() == QtCore.Qt.Checked})"
+                cur.execute(insert_query)
             for key, value in self.selected_items.items():
                 print(key, value)
+            self.close()
+
+
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
 
 
 if __name__ == '__main__':
     finder = Finder()
     app = QApplication(sys.argv)
-    wnd = TestDialogWind(finder)
-    wnd.show()
+    con = sqlite3.connect('../db/challenge.db')
+    wnd = TestDialogWind(finder, con)
+    wnd.exec()
+    con.close()
+    sys.excepthook = except_hook
     sys.exit(app.exec())

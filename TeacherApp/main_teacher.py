@@ -2,11 +2,11 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-from for_teacher import Ui_MainWindow
+from TeacherApp.for_teacher import Ui_MainWindow
 
-from finder import Finder
+from TeacherApp.finder import Finder
 
-from test_dialog import TestDialogWind
+from TeacherApp.test_dialog import TestDialogWind
 
 class TeacherAppMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
