@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel
     QCheckBox, QLineEdit, QHBoxLayout, \
     QPushButton, QMessageBox
 
+from TeacherApp.database_engine import DatabaseEngine
 from TeacherApp.finder import Finder
 
 SIZE_WIDTH, SIZE_HEIGHT = 1200, 600
@@ -16,7 +17,6 @@ class TestDialogWind(QDialog):
         super().__init__()
         self.setWindowTitle('Формирование теста')
         self.resize(SIZE_WIDTH, SIZE_HEIGHT)
-        self.list_modules = finder.list_modules
         self.list_topics = finder.list_topics_names
         self.list_content = finder.list_topics_data
         self.setStyleSheet('font-size: 16px')
@@ -51,7 +51,7 @@ class TestDialogWind(QDialog):
             self.table[i].setGridStyle(QtCore.Qt.SolidLine)
             self.table[i].resizeRowsToContents()
             self.table[i].setWordWrap(True)
-            self.tool_box.addItem(self.table[i], self.list_topics[i])
+            self.tool_box.addItem(self.table[i], self.list_topics[i][0])
         self.tool_box.setCurrentIndex(0)
 
         self.button_save = QPushButton()
@@ -76,7 +76,6 @@ class TestDialogWind(QDialog):
 
         self.selected_items = {}
         self.insert_mode = True
-        self.db_con = con
 
     def create_table(self, index):
         count_rows = len(self.list_content[index])
@@ -88,7 +87,7 @@ class TestDialogWind(QDialog):
             item_count = QStandardItem('0')
             item_count.setEnabled(True)
             try:
-                exec(f'import {self.list_modules[index]} as module')
+                exec(f'import {self.list_topics[index][1]} as module')
                 test_task = eval(f'module.{self.list_content[index][row]}()')
                 test_task.make_task()
                 example_text = test_task.generated_text
@@ -167,12 +166,16 @@ class TestDialogWind(QDialog):
     def save_test(self):
         if self.validate():
             if self.insert_mode:
-                cur = self.db_con.cursor()
-                insert_query = "INSERT INTO challenges(title, mixing, training) VALUES "
-                insert_query += f"('{self.linedit_name.text()}', "
-                insert_query += f"{self.check_random.checkState() == QtCore.Qt.Checked}, "
-                insert_query += f"{self.check_study.checkState() == QtCore.Qt.Checked})"
-                cur.execute(insert_query)
+                title_challenge = self.linedit_name.text()
+                db.insert_challenge(title_challenge, self.check_random.isChecked(),
+                                         self.check_study.isChecked())
+                id_challenge = db.search_id_challenge(title_challenge)
+                if id_challenge == -1:
+                    print("Непридвиденная ошибка базы данных")
+                    sys.exit(-1)
+                for key, value in self.selected_items.items():
+                    for elem in value:
+                        db.insert_challenge_item(elem[0], id_challenge, elem[1], key[1])
             for key, value in self.selected_items.items():
                 print(key, value)
             self.close()
@@ -184,10 +187,11 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     finder = Finder()
+    db = DatabaseEngine()
     app = QApplication(sys.argv)
     con = sqlite3.connect('../db/challenge.db')
     wnd = TestDialogWind(finder, con)
     wnd.exec()
-    con.close()
+    db.close()
     sys.excepthook = except_hook
     sys.exit(app.exec())
