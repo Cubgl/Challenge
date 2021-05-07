@@ -1,3 +1,3 @@
-from . import excel_table_
+from .excel_table_ import *
 
-from . import number_systems_
+from .number_systems_ import *

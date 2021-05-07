@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel
     QCheckBox, QLineEdit, QHBoxLayout, \
     QPushButton, QMessageBox
 
-from TeacherApp.database_engine import DatabaseEngine
+from DatabaseTools.database_engine import DatabaseEngine
 from TeacherApp.finder import Finder
 
 SIZE_WIDTH, SIZE_HEIGHT = 1200, 600
@@ -60,7 +60,7 @@ class TestDialogWind(QDialog):
         self.button_save.clicked.connect(self.save_test)
         self.button_cancel = QPushButton()
         self.button_cancel.setText('Отмена')
-        self.button_cancel.clicked.connect(self.close)
+        self.button_cancel.clicked.connect(self.reject)
         self.layout_button = QHBoxLayout()
         self.layout_button.addWidget(self.button_save)
         self.layout_button.insertSpacing(0, SIZE_WIDTH // 3)
@@ -167,8 +167,12 @@ class TestDialogWind(QDialog):
         if self.validate():
             if self.insert_mode:
                 title_challenge = self.linedit_name.text()
-                db.insert_challenge(title_challenge, self.check_random.isChecked(),
-                                         self.check_study.isChecked())
+                try:
+                    db.insert_challenge(title_challenge, self.check_random.isChecked(),
+                                        self.check_study.isChecked())
+                except Exception as e:
+                    print("Непридвиденная ошибка базы данных", e)
+                    return
                 id_challenge = db.search_id_challenge(title_challenge)
                 if id_challenge == -1:
                     print("Непридвиденная ошибка базы данных")
@@ -176,9 +180,10 @@ class TestDialogWind(QDialog):
                 for key, value in self.selected_items.items():
                     for elem in value:
                         db.insert_challenge_item(elem[0], id_challenge, elem[1], key[1])
-            for key, value in self.selected_items.items():
-                print(key, value)
-            self.close()
+                QMessageBox().information(self, "Успешно", 'Тест добавлен в базу данных.')
+                self.accept()
+            # for key, value in self.selected_items.items():
+            #     print(key, value)
 
 
 def except_hook(cls, exception, traceback):
@@ -191,7 +196,8 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     con = sqlite3.connect('../db/challenge.db')
     wnd = TestDialogWind(finder, con)
-    wnd.exec()
-    db.close()
+    if wnd.exec() == QDialog.Accepted:
+        db.close()
+        sys.exit()
     sys.excepthook = except_hook
     sys.exit(app.exec())

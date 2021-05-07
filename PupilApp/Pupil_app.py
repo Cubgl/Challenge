@@ -5,17 +5,18 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QRadioButton, QGroupBox, QHBoxLayout, QTextEdit, \
     QVBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDialog
 
-from topic.excel_table_ import *
-from topic.number_systems_ import DecToOtherNumberSystemWithoutLetters, \
-    DecToOtherNumberSystemWithLetters
+# from topic.excel_table_ import *
+# from topic.number_systems_ import *
+from DatabaseTools.database_engine import DatabaseEngine
+from topic.all_topics import *
 
 SIZE_WIDTH, SIZE_HEIGHT = 800, 600
 
 
 class CentralArea(QDialog):
-    def __init__(self, list_tasks):
+    def __init__(self, list_tasks, test_name, if_learning_mode):
         super().__init__()
-        self.setWindowTitle('Challenge')
+        self.setWindowTitle(test_name)
         self.resize(SIZE_WIDTH, SIZE_HEIGHT)
         self.setStyleSheet('font-size: 18px')
 
@@ -151,7 +152,6 @@ class CentralArea(QDialog):
         index = self.selected_item
         current_task = self.tasks[index]
         self.statement.setHtml(current_task.generated_text)
-        print(current_task.task_image)
         if current_task.task_image is not None:
             self.picture.setPixmap(QPixmap(self.tasks[index].task_image))
         else:
@@ -178,8 +178,7 @@ class CentralArea(QDialog):
                                       QMessageBox.Yes | QMessageBox.No,
                                       QMessageBox.No)
         if result == QMessageBox.Yes:
-            e.accept()
-            QDialog.closeEvent(self, e)
+            quit()
         else:
             e.ignore()
 
@@ -190,8 +189,13 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    wnd = CentralArea([CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
-                       DecToOtherNumberSystemWithoutLetters(), DecToOtherNumberSystemWithLetters()])
+    db = DatabaseEngine()
+
+    data_test, test_items = db.load_test_params(13)
+    # test_items = [CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
+    #                    DecToOtherNumberSystemWithoutLetters(), DecToOtherNumberSystemWithLetters()]
+    wnd = CentralArea(test_items, data_test[0], data_test[1])
     wnd.show()
+    db.close()
     sys.excepthook = except_hook
     sys.exit(app.exec())
