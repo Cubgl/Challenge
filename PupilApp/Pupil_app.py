@@ -5,25 +5,29 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QRadioButton, QGroupBox, QHBoxLayout, QTextEdit, \
     QVBoxLayout, QLineEdit, QLabel, QPushButton, QMessageBox, QDialog
 
-from topic.excel_table_ import *
+from DatabaseTools.database_engine import DatabaseEngine
+from topic.all_topics import *
 
 SIZE_WIDTH, SIZE_HEIGHT = 800, 600
 
 
 class CentralArea(QDialog):
-    def __init__(self, list_tasks):
+    def __init__(self, list_tasks, test_name, is_learning_mode):
         super().__init__()
-        self.setWindowTitle('Challenge')
+        self.learning_mode = is_learning_mode
+        self.setWindowTitle(test_name)
         self.resize(SIZE_WIDTH, SIZE_HEIGHT)
         self.setStyleSheet('font-size: 18px')
 
         self.selected_item = 0
         self.tasks = list_tasks
+        for i in range(len(self.tasks)):
+            self.tasks[i].make_task()
         self.tasks[0].statement()
-        print('Изображение:', self.tasks[0].task_image)
 
         self.answers = [None] * len(self.tasks)
         self.results = [None] * len(self.tasks)
+        self.good_answers = [None] * len(self.tasks)
 
         self.interface()
         self.change_text_task()
@@ -43,7 +47,7 @@ class CentralArea(QDialog):
         self.task_layout = QHBoxLayout(self)
 
         self.statement = QTextEdit(self)
-        self.resize(SIZE_WIDTH // 2, SIZE_HEIGHT // 4)
+        self.resize(SIZE_WIDTH, SIZE_HEIGHT // 4 * 3)
         self.statement.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.task_layout.addWidget(self.statement)
 
@@ -71,8 +75,14 @@ class CentralArea(QDialog):
         self.save_button.clicked.connect(self.send_answer)
         self.save_button.setDefault(True)
 
+        self.label_good_answer = QLabel("")
+
         self.last_line_layout.addWidget(self.save_button)
-        self.last_line_layout.addSpacing(SIZE_WIDTH // 2)
+        if not self.learning_mode:
+            self.last_line_layout.addSpacing(SIZE_WIDTH // 2)
+        else:
+            self.last_line_layout.addWidget(self.label_good_answer)
+            self.last_line_layout.addSpacing(SIZE_WIDTH // 4)
 
         self.central_layout.addLayout(self.last_line_layout)
 
@@ -122,6 +132,9 @@ class CentralArea(QDialog):
         self.selected_item = int(btn.text()) - 1
         current_task = self.tasks[self.selected_item]
         self.change_text_task()
+        if not self.finish_button.isEnabled():
+            self.label_good_answer.setText(
+                f'Правильный ответ: {self.good_answers[self.selected_item]}')
 
     def finish_test(self):
         if not all(self.results):
@@ -136,6 +149,9 @@ class CentralArea(QDialog):
                 user_answer = ''.join(self.results[i].upper().split())
             ok_answer = self.tasks[i].good_answer.upper()
             count_good_answers += user_answer == ok_answer
+            if self.learning_mode:
+                self.good_answers[i] = ok_answer
+                self.label_good_answer.setText(f'Правильный ответ: {ok_answer}')
         self.test_result = count_good_answers
         result_string = f'Ваш результат: {count_good_answers} из {len(self.results)}.'
         QMessageBox().information(self, 'Результат', result_string)
@@ -147,7 +163,6 @@ class CentralArea(QDialog):
         index = self.selected_item
         current_task = self.tasks[index]
         self.statement.setHtml(current_task.generated_text)
-        print(current_task.task_image)
         if current_task.task_image is not None:
             self.picture.setPixmap(QPixmap(self.tasks[index].task_image))
         else:
@@ -174,8 +189,7 @@ class CentralArea(QDialog):
                                       QMessageBox.Yes | QMessageBox.No,
                                       QMessageBox.No)
         if result == QMessageBox.Yes:
-            e.accept()
-            QDialog.closeEvent(self, e)
+            quit()
         else:
             e.ignore()
 
@@ -186,8 +200,13 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    wnd = CentralArea([CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
-                       CalcFromIndirectInformation()])
+    db = DatabaseEngine()
+
+    data_test, test_items = db.load_test_params(13)
+    # test_items = [CalcFromWithPicture(), CalcFromIndirectInformation(), CalcFromWithPicture(),
+    #                    DecToOtherNumberSystemWithoutLetters(), DecToOtherNumberSystemWithLetters()]
+    wnd = CentralArea(test_items, data_test[0], data_test[1])
     wnd.show()
+    db.close()
     sys.excepthook = except_hook
     sys.exit(app.exec())
