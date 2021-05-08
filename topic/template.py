@@ -1,6 +1,6 @@
 import random
 
-PREFIX_FOR_PATH_TO_IMAGE = './image/'
+PREFIX_FOR_PATH_TO_IMAGE = '../image/'
 
 class Constraint():
     def __init__(self, str_name=""):

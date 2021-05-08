@@ -14,9 +14,34 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTableView" name="tableView_test"/>
+     <widget class="QTableWidget" name="tableWidget_test"/>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QPushButton" name="button_add">
+        <property name="text">
+         <string>Создать тест</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_edit">
+        <property name="text">
+         <string>Изменить тест</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="button_delete">
+        <property name="text">
+         <string>Удалить тест</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -39,24 +64,14 @@
     <addaction name="separator"/>
     <addaction name="quit"/>
    </widget>
-   <widget class="QMenu" name="menu_results">
-    <property name="title">
-     <string>Результаты</string>
-    </property>
-    <addaction name="pupil_res"/>
-    <addaction name="test_stats"/>
-    <addaction name="task_stats"/>
-   </widget>
    <widget class="QMenu" name="menu_about">
     <property name="title">
-     <string>О прогремме...</string>
+     <string>О программе...</string>
     </property>
    </widget>
    <addaction name="menu_test"/>
-   <addaction name="menu_results"/>
    <addaction name="menu_about"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="add_test">
    <property name="text">
     <string>Создать</string>

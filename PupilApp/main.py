@@ -8,12 +8,14 @@ from PyQt5.QtWidgets import QDialog, QApplication, QListView, QAbstractItemView,
 from DatabaseTools.database_engine import DatabaseEngine
 from PupilApp.Pupil_app import CentralArea
 
+SIZE_WIDTH, SIZE_HEIGHT = 750, 550
+
 
 class SelectTestWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Challenge')
-        self.setGeometry(0,0, 750, 550)
+        self.resize(SIZE_WIDTH, SIZE_HEIGHT)
         self.setStyleSheet('font-size: 18px')
         self.data_challenges = db.search_all_challenges()
         self.list_widget = QListWidget()
@@ -42,7 +44,7 @@ class SelectTestWindow(QDialog):
             QMessageBox().information(self, "Тест не выбран", 'Выделите тест в списке, пожалуйста!')
             return
         title_test = item_selected[0].text()
-        print(title_test)
+        # print(title_test)
         id_test = db.search_id_challenge(title_test)
         self.data_test, self.test_items = db.load_test_params(id_test)
         self.accept()

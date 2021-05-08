@@ -1,5 +1,7 @@
 import sys
 import sqlite3
+from pprint import pprint
+
 from PyQt5 import QtCore
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QToolBox, QLabel, QTableView, \
@@ -13,7 +15,7 @@ SIZE_WIDTH, SIZE_HEIGHT = 1200, 600
 
 
 class TestDialogWind(QDialog):
-    def __init__(self, finder, con):
+    def __init__(self, finder, data_for_edit):
         super().__init__()
         self.setWindowTitle('Формирование теста')
         self.resize(SIZE_WIDTH, SIZE_HEIGHT)
@@ -73,9 +75,38 @@ class TestDialogWind(QDialog):
         self.layout.addWidget(self.tool_box)
         self.layout.addLayout(self.layout_button)
         self.setLayout(self.layout)
-
+        self.info_challenge = None
+        self.the_new_test = not data_for_edit
+        if not self.the_new_test:
+            self.load_params(data_for_edit)
         self.selected_items = {}
-        self.insert_mode = True
+
+    def load_params(self, data_for_edit):
+        self.info_challenge, info_items = data_for_edit
+        self.linedit_name.setText(self.info_challenge[1])
+        if self.info_challenge[2]:
+            self.check_random.setCheckState(QtCore.Qt.Checked)
+        if self.info_challenge[3]:
+            self.check_study.setCheckState(QtCore.Qt.Checked)
+        for i in range(len(self.list_models)):
+            name_topic = self.list_topics[i]
+            if name_topic[1] not in info_items:
+                continue
+            classes_for_find = set()
+            for elem in info_items[name_topic[1]]:
+                classes_for_find.add(elem[0])
+            for j in range(self.list_models[i].rowCount()):
+                name_class = self.list_models[i].item(j, 0)
+                count_items = self.list_models[i].item(j, 1)
+                if name_class.text() not in classes_for_find:
+                    continue
+                name_class.setCheckState(QtCore.Qt.Checked)
+                new_count = None
+                for elem in info_items[name_topic[1]]:
+                    if elem[0] == name_class.text():
+                        new_count = elem[1]
+                        break
+                count_items.setText(str(new_count))
 
     def create_table(self, index):
         count_rows = len(self.list_content[index])
@@ -164,8 +195,34 @@ class TestDialogWind(QDialog):
         return True
 
     def save_test(self):
+        id_challenge = None
         if self.validate():
-            if self.insert_mode:
+            if not self.the_new_test:
+                id_challenge = int(self.info_challenge[0])
+                print(id_challenge)
+                db = DatabaseEngine()
+                res_value = db.delete_items_for_challenge(id_challenge)
+                db.close()
+                if res_value == -1:
+                    return
+                db = DatabaseEngine()
+                res_value = db.update_challenges('title', self.linedit_name.text(), id_challenge)
+                db.close()
+                if res_value == -1:
+                    return
+                db = DatabaseEngine()
+                res_value = db.update_challenges('mixing', int(self.check_random.isChecked()),
+                                                 id_challenge)
+                db.close()
+                if res_value == -1:
+                    return
+                db = DatabaseEngine()
+                res_value = db.update_challenges('training', int(self.check_study.isChecked()), id_challenge)
+                db.close()
+                if res_value == -1:
+                    return
+            else:
+                db = DatabaseEngine()
                 title_challenge = self.linedit_name.text()
                 try:
                     db.insert_challenge(title_challenge, self.check_random.isChecked(),
@@ -174,16 +231,21 @@ class TestDialogWind(QDialog):
                     print("Непридвиденная ошибка базы данных", e)
                     return
                 id_challenge = db.search_id_challenge(title_challenge)
-                if id_challenge == -1:
-                    print("Непридвиденная ошибка базы данных")
-                    sys.exit(-1)
-                for key, value in self.selected_items.items():
-                    for elem in value:
-                        db.insert_challenge_item(elem[0], id_challenge, elem[1], key[1])
+                db.close()
+            if id_challenge is None or id_challenge == -1:
+                print("Непридвиденная ошибка базы данных")
+                return -1
+            db = DatabaseEngine()
+            for key, value in self.selected_items.items():
+                for elem in value:
+                    db.insert_challenge_item(elem[0], id_challenge, elem[1], key[1])
+            db.close()
+            if not self.the_new_test:
+                QMessageBox().information(self, "Успешно", 'Тест успешно изменен.')
+            else:
                 QMessageBox().information(self, "Успешно", 'Тест добавлен в базу данных.')
-                self.accept()
-            # for key, value in self.selected_items.items():
-            #     print(key, value)
+            self.accept()
+
 
 
 def except_hook(cls, exception, traceback):
@@ -192,12 +254,10 @@ def except_hook(cls, exception, traceback):
 
 if __name__ == '__main__':
     finder = Finder()
-    db = DatabaseEngine()
     app = QApplication(sys.argv)
-    con = sqlite3.connect('../db/challenge.db')
-    wnd = TestDialogWind(finder, con)
+    empty_list = []
+    wnd = TestDialogWind(finder, empty_list)
     if wnd.exec() == QDialog.Accepted:
-        db.close()
         sys.exit()
     sys.excepthook = except_hook
     sys.exit(app.exec())
