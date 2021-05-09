@@ -44,10 +44,19 @@ class SelectTestWindow(QDialog):
             QMessageBox().information(self, "Тест не выбран", 'Выделите тест в списке, пожалуйста!')
             return
         title_test = item_selected[0].text()
-        # print(title_test)
         id_test = db.search_id_challenge(title_test)
         self.data_test, self.test_items = db.load_test_params(id_test)
         self.accept()
+
+    def closeEvent(self, e):
+        result = QMessageBox.question(self, 'Подтверждение закрытия окна',
+                                      'Вы действительно хотите закрыть окно?',
+                                      QMessageBox.Yes | QMessageBox.No,
+                                      QMessageBox.No)
+        if result == QMessageBox.Yes:
+            quit()
+        else:
+            e.ignore()
 
 
 def except_hook(cls, exception, traceback):

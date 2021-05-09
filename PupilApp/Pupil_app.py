@@ -89,7 +89,7 @@ class CentralArea(QDialog):
         self.setLayout(self.central_layout)
 
     def interface_switch_bar(self, count_tasks, layout):
-        groupbox = QGroupBox(self)
+        self.groupbox = QGroupBox(self)
         radiogroup_layout = QHBoxLayout(self)
         for i in range(count_tasks):
             button = QRadioButton(self)
@@ -100,8 +100,8 @@ class CentralArea(QDialog):
             button.setToolTip('Номер задания')
             button.setToolTipDuration(3000)
             radiogroup_layout.addWidget(button)
-        groupbox.setLayout(radiogroup_layout)
-        layout.addWidget(groupbox)
+        self.groupbox.setLayout(radiogroup_layout)
+        layout.addWidget(self.groupbox)
 
         self.finish_button = QPushButton(self)
         self.finish_button.setText('Завершить тест')
@@ -151,13 +151,14 @@ class CentralArea(QDialog):
             count_good_answers += user_answer == ok_answer
             if self.learning_mode:
                 self.good_answers[i] = ok_answer
-                self.label_good_answer.setText(f'Правильный ответ: {ok_answer}')
         self.test_result = count_good_answers
         result_string = f'Ваш результат: {count_good_answers} из {len(self.results)}.'
         QMessageBox().information(self, 'Результат', result_string)
         self.test_result = result_string
         self.finish_button.setEnabled(False)
-        self.result_label.setText(result_string)
+        self.label_good_answer.setText(
+            f'Правильный ответ: {self.good_answers[self.selected_item]}')
+
 
     def change_text_task(self):
         index = self.selected_item
