@@ -1,8 +1,7 @@
 import sys
 
-from PyQt5.QtCore import QItemSelectionModel
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
-from PyQt5.QtWidgets import QDialog, QApplication, QListView, QAbstractItemView, QVBoxLayout, \
+
+from PyQt5.QtWidgets import QDialog, QApplication, QAbstractItemView, QVBoxLayout, \
     QPushButton, QHBoxLayout, QLabel, QMessageBox, QListWidget
 
 from DatabaseTools.database_engine import DatabaseEngine

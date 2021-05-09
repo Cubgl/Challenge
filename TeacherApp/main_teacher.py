@@ -1,9 +1,6 @@
 import sys
 
-from PyQt5 import QtCore
-from PyQt5.QtSql import QSqlDatabase, QSqlTableModel
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableView, QDialog, \
-    QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidgetItem
 
 from DatabaseTools.database_engine import DatabaseEngine
 from TeacherApp.for_teacher import Ui_MainWindow
