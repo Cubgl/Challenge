@@ -64,13 +64,7 @@
     <addaction name="separator"/>
     <addaction name="quit"/>
    </widget>
-   <widget class="QMenu" name="menu_about">
-    <property name="title">
-     <string>О программе...</string>
-    </property>
-   </widget>
    <addaction name="menu_test"/>
-   <addaction name="menu_about"/>
   </widget>
   <action name="add_test">
    <property name="text">

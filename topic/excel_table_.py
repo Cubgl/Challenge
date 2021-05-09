@@ -18,7 +18,7 @@ class CalcFromIndirectInformation(Task):
 class CalcFromWithPicture(Task):
     def statement(self):
         self.task_image = PREFIX_FOR_PATH_TO_IMAGE + 'et1.JPG'
-        return """Чему равно значение ячейки D3, исли в ячейку D3 введена формула =MAКС({{a}})."""
+        return """Чему равно значение ячейки D3, если в ячейку D3 введена формула =MAКС({{a}})."""
 
     def calculate(self, **values_params):
         data = [[1, 8, 5, 9], [9, 5, 3, 15], [7, 7, 9, None], [None, 24, 3, 6]]
